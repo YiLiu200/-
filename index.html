@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医学生复试全真模拟 - PandaMed</title>
+    <style>
+        :root { --primary: #2c3e50; --secondary: #3498db; --accent: #27ae60; --bg: #f4f7f6; --danger: #e74c3c; }
+        body { font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--primary); line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { font-size: 2rem; margin-bottom: 10px; }
+        .subtitle { color: #7f8c8d; }
+
+        /* 六大板块布局 */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease; border-top: 6px solid var(--secondary); display: flex; flex-direction: column; justify-content: space-between; }
+        .card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .card h2 { margin: 0 0 15px 0; font-size: 1.25rem; display: flex; align-items: center; gap: 10px; }
+        .card p { color: #666; font-size: 0.9rem; margin: 0; }
+
+        /* 内容视图 */
+        #question-view, #practice-view { display: none; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
+        .btn-back { background: #ecf0f1; color: #7f8c8d; }
+        .btn-random { background: var(--accent); color: white; }
+        
+        /* 问题项 */
+        .q-item { padding: 20px; border-bottom: 1px solid #f9f9f9; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .q-item:hover { background: #fcfdfe; }
+        .q-text { font-size: 1.05rem; flex: 1; padding-right: 20px; }
+        .play-icon { background: #3498db22; color: var(--secondary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; }
+
+        /* 练习模式 */
+        .practice-container { text-align: center; max-width: 700px; margin: 0 auto; }
+        .voice-controls { background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; }
+        #hidden-q { font-size: 1.8rem; min-height: 80px; display: flex; align-items: center; justify-content: center; margin: 30px 0; padding: 20px; border: 2px dashed #ddd; border-radius: 10px; color: #ccc; }
+        .tips-box { background: #fff9e6; border-left: 5px solid #f1c40f; padding: 20px; margin-top: 30px; text-align: left; display: none; }
+
+        select, input[type="range"] { width: 100%; margin-top: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🩺 医学生复试全真模拟系统</h1>
+        <p class="subtitle">针对图片高频问题深度定制 | PandaMed 荣誉出品</p>
+    </header>
+
+    <div id="home-view" class="grid">
+        <div class="card" onclick="showCategory(0)">
+            <h2>👤 个人画像与背景</h2>
+            <p>英文名、家乡特产、医疗家庭背景、兄弟姐妹、最好的朋友...</p>
+        </div>
+        <div class="card" onclick="showCategory(1)">
+            <h2>🎨 软实力与特长</h2>
+            <p>绘画作品介绍、表演经历、兴趣爱好、周末安排、手机品牌选择...</p>
+        </div>
+        <div class="card" onclick="showCategory(2)">
+            <h2>🎓 本科表现与英语</h2>
+            <p>高绩点原因、小众专业解析、班级情况、英语学习态度与方法...</p>
+        </div>
+        <div class="card" onclick="showCategory(3)">
+            <h2>🔬 科研与职业追求</h2>
+            <p>实验室经历、科研领域兴趣、最新进展、行医动机、硕博规划...</p>
+        </div>
+        <div class="card" onclick="showCategory(4)">
+            <h2>🧠 心理素质与团队</h2>
+            <p>压力调节、挫折应对、团队凝聚力、多任务处理、朋友对你的评价...</p>
+        </div>
+        <div class="card" onclick="showCategory(5)">
+            <h2>🌍 社会观察与生活</h2>
+            <p>疫情影响、恋爱关系、旅游规划、景点介绍、实践与科学的关系...</p>
+        </div>
+    </div>
+
+    <div id="question-view">
+        <div class="nav-header">
+            <button class="btn btn-back" onclick="goHome()">← 返回板块</button>
+            <h2 id="cat-title" style="margin:0">板块名称</h2>
+            <button class="btn btn-random" onclick="startRandom()">🎲 进入抽听模式</button>
+        </div>
+        <div id="q-list"></div>
+    </div>
+
+    <div id="practice-view">
+        <button class="btn btn-back" onclick="backToList()">← 返回列表</button>
+        <div class="practice-container">
+            <h2>听力模拟练习</h2>
+            <div class="voice-controls">
+                <div>
+                    <label>选择口音 (Voice):</label>
+                    <select id="voice-select"></select>
+                </div>
+                <div>
+                    <label>语速 (Rate):</label>
+                    <input type="range" id="rate-range" min="0.6" max="1.4" step="0.1" value="1">
+                </div>
+            </div>
+            
+            <button onclick="pickRandom()" style="padding:15px 40px; font-size:1.2rem; background:var(--secondary); color:white; border:none; border-radius:50px; cursor:pointer; box-shadow: 0 5px 15px rgba(52,152,219,0.3)">🎲 随机抽题播放</button>
+            
+            <div id="hidden-q">题目文本已隐藏，请注意听...</div>
+            
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button class="btn" onclick="toggleReveal()" style="background:#95a5a6; color:white;">显示/隐藏文字</button>
+                <button class="btn" onclick="toggleTips()" style="background:#f1c40f; color:white;">查看回答策略</button>
+                <button class="btn" onclick="replay()" style="background:#34495e; color:white;">🔄 重播</button>
+            </div>
+            
+            <div id="tips-content" class="tips-box"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const data = [
+    { title: "个人画像与背景", questions: [
+        { q: "What is your English name and why did you choose it?", tip: "建议：解释名字含义或纪念意义，联系到你的性格特征。" },
+        { q: "Introduce your family and parents.", tip: "建议：不仅介绍成员，要提到家庭氛围对你学习习惯的影响。" },
+        { q: "Do you have any brothers or sisters?", tip: "建议：如实回答，可拓展谈及与手足的相处如何让你学会分享或照顾他人。" },
+        { q: "Introduce your best friend.", tip: "建议：描述对方的一个品质，以及你们如何相互促进学习。" },
+        { q: "Introduce the special products of your hometown.", tip: "建议：选取1-2个代表性特产，用简单的形容词描述口感或历史。" },
+        { q: "You come from a medical family, what influence does it have on you?", tip: "建议：重点谈及对职业的尊重和对医疗艰辛的理性认知。" }
+    ]},
+    { title: "软实力与特长", questions: [
+        { q: "Your painting is very nice. Tell me about your work.", tip: "建议：强调艺术锻炼了你的耐心和对解剖结构的微观观察力。" },
+        { q: "You have experience in acting. What did you mainly do?", tip: "建议：谈论舞台经验如何克服你的紧张，提高沟通和共情能力。" },
+        { q: "What are your hobbies and interests?", tip: "建议：展示你是一个生活平衡的人，如运动能让你在科研压力下保持精力。" },
+        { q: "What do you usually do on weekends?", tip: "建议：适当提到休息与学习的结合（如阅读文献或参加志愿活动）。" },
+        { q: "What type of cellphone do you use? Why did you choose it?", tip: "建议：侧重功能性（如续航、学习APP兼容性），展示理性的消费观。" }
+    ]},
+    { title: "本科表现与英语", questions: [
+        { q: "Is your GPA so high because you're smart or hard-working?", tip: "建议：平衡回答。智慧是基础，但医学的严谨要求持久的勤奋。" },
+        { q: "Why are there so few students in your major?", tip: "建议：解释该专业的特殊性、高标准筛选或人才培养的精准定位。" },
+        { q: "Tell us about your class.", tip: "建议：描述班级学习氛围（如Study group）和团队竞争协作的关系。" },
+        { q: "How do you learn English in daily study?", tip: "建议：提到阅读医学原版教材、看专业视频或背单词的习惯。" },
+        { q: "What's your attitude towards learning English?", tip: "建议：视其为获取国际前沿医学资讯必不可少的工具。" }
+    ]},
+    { title: "科研与职业追求", questions: [
+        { q: "Have you ever been to the lab for research?", tip: "建议：简述具体实验内容，强调你掌握的技能（如PCR, Cell Culture）。" },
+        { q: "What's the research realm that you're most interested in?", tip: "建议：说出细分领域，并给出1-2个选择它的专业理由。" },
+        { q: "Why do you want to be a doctor?", tip: "建议：结合具体案例谈职业使命感，展现对患者的同情心。" },
+        { q: "What is your long-term and short-term goal?", tip: "建议：短期为掌握临床技能/发表论文；长期为成为领域专家。" },
+        { q: "Why do you choose academic or professional degree?", tip: "建议：根据所选类型，谈论是对科研探索的热爱还是对临床操作的向往。" }
+    ]},
+    { title: "心理素质与团队", questions: [
+        { q: "How do you deal with setbacks?", tip: "建议：分析原因 -> 寻求帮助 -> 采取行动 -> 总结经验。展示复原力。" },
+        { q: "How to unite teammates in life?", tip: "建议：强调沟通、明确分工和利益共享（Win-win）。" },
+        { q: "What do your friends talk about you?", tip: "建议：借他人之口说出你的优点，如‘可靠’、‘细心’。" },
+        { q: "How do you release your stress and anxiety?", tip: "建议：提到积极的排解方式，并说明这如何帮助你更快回到工作状态。" },
+        { q: "Do you think you are a multitasked person?", tip: "建议：强调在多任务中分清轻重缓急（Prioritizing）的能力。" }
+    ]},
+    { title: "社会观察与生活", questions: [
+        { q: "Do you think the epidemic has affected you a lot?", tip: "建议：谈论对公共卫生体系的思考，以及对医护精神的深刻理解。" },
+        { q: "Are you in a relationship?", tip: "建议：坦诚。如有，强调相互激励；如无，强调对个人成长的专注。" },
+        { q: "Who will you travel together if you have a chance?", tip: "建议：选择家人或志同道合的朋友，说明原因。" },
+        { q: "Please introduce a tourist attraction.", tip: "建议：简洁描述其自然美或文化价值，展示人文底蕴。" },
+        { q: "What's the relationship between practice and science?", tip: "建议：科学提供理论指导，实践检验理论并推动新科学问题的产生。" }
+    ]}
+];
+
+let currentCat = 0;
+let currentQ = null;
+const synth = window.speechSynthesis;
+
+// 初始加载口音
+function loadVoices() {
+    const select = document.getElementById('voice-select');
+    const allVoices = synth.getVoices();
+    const enVoices = allVoices.filter(v => v.lang.includes('en'));
+    
+    if (enVoices.length === 0 && allVoices.length > 0) {
+        // 如果没有纯英文口音，加载所有
+        select.innerHTML = allVoices.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
+    } else {
+        select.innerHTML = enVoices.map(v => `<option value="${v.name}">${v.name} (${v.lang})</option>`).join('');
+    }
+}
+
+// 确保口音列表加载完毕
+if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function showCategory(index) {
+    currentCat = index;
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('question-view').style.display = 'block';
+    document.getElementById('cat-title').innerText = data[index].title;
+    const list = document.getElementById('q-list');
+    list.innerHTML = data[index].questions.map((item) => `
+        <div class="q-item">
+            <div class="q-text">${item.q}</div>
+            <button class="play-icon" onclick="speak('${item.q}')">▶️</button>
+        </div>
+    `).join('');
+}
+
+function goHome() {
+    document.getElementById('home-view').style.display = 'grid';
+    document.getElementById('question-view').style.display = 'none';
+    document.getElementById('practice-view').style.display = 'none';
+}
+
+function startRandom() {
+    document.getElementById('question-view').style.display = 'none';
+    document.getElementById('practice-view').style.display = 'block';
+    loadVoices();
+}
+
+function backToList() {
+    document.getElementById('practice-view').style.display = 'none';
+    document.getElementById('question-view').style.display = 'block';
+}
+
+function speak(text) {
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    const voices = synth.getVoices();
+    const selectedVoiceName = document.getElementById('voice-select').value;
+    utter.voice = voices.find(v => v.name === selectedVoiceName);
+    utter.rate = document.getElementById('rate-range').value;
+    synth.speak(utter);
+}
+
+function pickRandom() {
+    const questions = data[currentCat].questions;
+    currentQ = questions[Math.floor(Math.random() * questions.length)];
+    document.getElementById('hidden-q').innerText = "Question is playing... (Hidden)";
+    document.getElementById('hidden-q').style.color = "#ccc";
+    document.getElementById('hidden-q').style.background = "#fcfcfc";
+    document.getElementById('tips-content').style.display = 'none';
+    speak(currentQ.q);
+}
+
+function replay() {
+    if (currentQ) speak(currentQ.q);
+}
+
+function toggleReveal() {
+    const box = document.getElementById('hidden-q');
+    if (currentQ) {
+        box.innerText = currentQ.q;
+        box.style.color = "var(--danger)";
+        box.style.background = "#fff";
+    }
+}
+
+function toggleTips() {
+    const tipBox = document.getElementById('tips-content');
+    if (currentQ) {
+        tipBox.innerHTML = `<strong>💡 回答策略建议：</strong><br>${currentQ.tip}`;
+        tipBox.style.display = tipBox.style.display === 'block' ? 'none' : 'block';
+    }
+}
+
+// 页面初次加载
+window.onload = loadVoices;
+</script>
+</body>
+</html>
