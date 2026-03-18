@@ -2,130 +2,210 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>医学生保研面试模拟器 - 不发正刊不改名</title>
     <style>
-        :root { --primary: #2c3e50; --secondary: #3498db; --accent: #27ae60; --bg: #f8fafc; }
-        body { font-family: 'PingFang SC', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #1e293b; }
-        .container { max-width: 600px; margin: 0 auto; padding-bottom: 60px; }
-        
-        /* 验证码层 */
-        #auth-overlay { position: fixed; inset: 0; background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 2000; }
-        .auth-box { background: white; padding: 30px; border-radius: 24px; text-align: center; width: 85%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        input { width: 90%; padding: 15px; margin: 15px 0; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1.2rem; text-align: center; }
-        
-        /* 导航与标题 */
-        header { text-align: center; margin-bottom: 25px; }
-        h1 { font-size: 1.4rem; margin-bottom: 5px; color: var(--primary); }
-        .brand-sub { font-size: 0.85rem; color: #64748b; margin-bottom: 20px; }
+        :root { --primary: #2c3e50; --secondary: #3498db; --accent: #27ae60; --bg: #f4f7f6; --danger: #e74c3c; }
+        body { font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--primary); line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; padding-bottom: 60px; }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { font-size: 2.2rem; margin-bottom: 10px; color: var(--primary); }
+        .subtitle { color: #7f8c8d; font-weight: bold; }
 
-        /* 磁贴布局 */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .card { background: white; padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-bottom: 4px solid var(--secondary); transition: 0.2s; }
-        .card:active { transform: scale(0.98); }
-        .card h3 { font-size: 0.95rem; margin: 0; line-height: 1.4; }
-        .card-full { grid-column: span 2; border-bottom-color: var(--accent); background: #f0fdf4; }
+        /* 布局 */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease; border-top: 6px solid var(--secondary); text-align: center; }
+        .card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .card h2 { margin: 0; font-size: 1.2rem; color: var(--primary); }
+        .card.special { border-top-color: var(--accent); background: #f0fff4; }
 
-        /* 列表与控制 */
-        .q-item { background: white; margin-bottom: 10px; padding: 15px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .q-text { font-size: 0.95rem; display: block; margin-bottom: 10px; line-height: 1.5; font-weight: 500; }
-        .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid #f1f5f9; pt: 10px; padding-top: 8px; }
-        
-        select { padding: 6px; border-radius: 6px; border: 1px solid #cbd5e0; font-size: 0.8rem; flex: 1; }
-        .btn { padding: 10px 16px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-        .btn-play { background: var(--secondary); color: white; }
-        .btn-nav { background: #e2e8f0; color: var(--primary); }
+        /* 内容视图 */
+        #question-view, #practice-view { display: none; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 随机模式 */
-        #hidden-q { font-size: 1.25rem; margin: 25px 0; padding: 40px 20px; border: 2px dashed #cbd5e0; color: #94a3b8; border-radius: 20px; background: white; min-height: 100px; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 10px; }
+        .btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.9rem; }
+        .btn-back { background: #ecf0f1; color: #7f8c8d; }
+        .btn-random { background: var(--accent); color: white; }
         
-        /* 底部声明 */
-        footer { margin-top: 40px; text-align: center; font-size: 0.75rem; color: #94a3b8; line-height: 1.6; padding: 0 10px; }
+        /* 快速设置栏 */
+        .quick-settings { background: #f8f9fa; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 0.85rem; flex-wrap: wrap; }
+        .setting-item { display: flex; align-items: center; gap: 5px; }
+
+        /* 问题项 */
+        .q-item { padding: 15px; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; align-items: center; }
+        .q-text { font-size: 1rem; flex: 1; padding-right: 15px; color: #444; }
+        .play-btn { background: var(--secondary); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .play-btn:hover { opacity: 0.8; }
+
+        /* 练习模式 */
+        .practice-container { text-align: center; max-width: 700px; margin: 0 auto; }
+        #hidden-q { font-size: 1.5rem; min-height: 120px; display: flex; align-items: center; justify-content: center; margin: 25px 0; padding: 25px; border: 2px dashed #cbd5e0; border-radius: 12px; background: #fafafa; line-height: 1.4; }
+        
+        .footer-note { text-align: center; font-size: 0.8rem; color: #bdc3c7; margin-top: 40px; padding: 20px; border-top: 1px solid #eee; }
+
+        select, input[type="range"] { padding: 4px; border-radius: 4px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
-<div id="auth-overlay">
-    <div class="auth-box">
-        <h2>医学生保研面试模拟器</h2>
-        <p style="color:#64748b">请输入激活码开启练习</p>
-        <input type="text" id="pass-input" placeholder="请输入激活码" pattern="\d*">
-        <button onclick="checkPass()" class="btn" style="background:var(--secondary); color:white; width:100%; font-size:1.1rem">确认进入</button>
-        <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 15px;">不发正刊不改名（全平台同名）原创</p>
-    </div>
-</div>
-
-<div class="container" id="main-content" style="display:none">
+<div class="container">
     <header>
-        <h1>医学生保研面试模拟器</h1>
-        <div class="brand-sub">不发正刊不改名（全平台同名）原创</div>
+        <h1>🩺 医学生保研面试模拟器</h1>
+        <p class="subtitle">不发正刊不改名（全平台同名）原创</p>
     </header>
 
-    <div id="home-view" class="grid">
-        <div class="card" onclick="showCategory(0)"><h3>1. 自我介绍与周围环境<br>(Self-intro)</h3></div>
-        <div class="card" onclick="showCategory(1)"><h3>2. 本科阶段经历<br>(Experience)</h3></div>
-        <div class="card" onclick="showCategory(2)"><h3>3. 选择动机与规划<br>(Motivation)</h3></div>
-        <div class="card" onclick="showCategory(3)"><h3>4. 心理素质与人际<br>(Interpersonal)</h3></div>
-        <div class="card card-full" onclick="startRandomMode()">
-            <h3 style="color:var(--accent)">🎲 进入随机抽题模式</h3>
-            <p style="font-size:0.8rem; margin:5px 0 0; color:#666">全库随机抽取，模拟真实考场压力</p>
+    <div id="global-controls" class="quick-settings">
+        <div class="setting-item">
+            <label>🗣️ 人声:</label>
+            <select id="voice-select" style="width: 150px;"></select>
+        </div>
+        <div class="setting-item">
+            <label>⚡ 语速:</label>
+            <input type="range" id="rate-range" min="0.5" max="1.2" step="0.1" value="0.8">
+            <span id="rate-val">0.8</span>
         </div>
     </div>
 
-    <div id="question-view" style="display:none">
-        <button class="btn btn-nav" onclick="goHome()">← 返回主页</button>
-        <h2 id="cat-title" style="margin:20px 0 15px"></h2>
+    <div id="home-view" class="grid">
+        <div class="card" onclick="showCategory(0)"><h2>👤 自我介绍与环境</h2></div>
+        <div class="card" onclick="showCategory(1)"><h2>🎓 本科阶段经历</h2></div>
+        <div class="card" onclick="showCategory(2)"><h2>🎯 动机与未来规划</h2></div>
+        <div class="card" onclick="showCategory(3)"><h2>🧠 心理素质与人际</h2></div>
+        <div class="card special" onclick="startRandomGlobal()"><h2>🎲 进入随机抽题模式</h2></div>
+    </div>
+
+    <div id="question-view">
+        <div class="nav-header">
+            <button class="btn btn-back" onclick="goHome()">← 返回主页</button>
+            <h2 id="cat-title"></h2>
+            <button class="btn btn-random" onclick="startRandomFromCat()">🎲 随机本板块</button>
+        </div>
         <div id="q-list"></div>
     </div>
 
-    <div id="practice-view" style="display:none; text-align:center">
-        <button class="btn btn-nav" onclick="goHome()">← 返回主页</button>
-        <div id="hidden-q">点击下方按钮开始抽题</div>
-        
-        <div class="q-item" style="box-shadow:none; background:transparent">
-            <div class="controls" style="justify-content:center; margin-bottom:20px">
-                <select id="rand-voice" onchange="savePref()"></select>
-                <input type="range" id="rand-rate" min="0.5" max="1.2" step="0.1" value="0.8" style="width:100px">
-            </div>
-            <button onclick="pickRandom()" class="btn" style="background:var(--secondary); color:white; width:100%; padding:18px; font-size:1.1rem">🎲 随机抽取并播放</button>
+    <div id="practice-view">
+        <div class="nav-header">
+            <button class="btn btn-back" onclick="backToPrev()">← 返回列表</button>
+            <h2 id="mode-title">随机抽题练习</h2>
+            <span></span>
         </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px">
-            <button id="reveal-btn" onclick="toggleReveal(true)" class="btn" style="background:#cbd5e0">显示文字</button>
-            <button id="hide-btn" onclick="toggleReveal(false)" class="btn" style="background:#cbd5e0">隐藏文字</button>
+        <div class="practice-container">
+            <button onclick="pickRandom()" style="padding:15px 40px; font-size:1.1rem; background:var(--secondary); color:white; border:none; border-radius:50px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3)">点击随机抽题并播放</button>
+            
+            <div id="hidden-q">题目已隐藏，请仔细听讲...</div>
+            
+            <div style="display:flex; gap:10px; justify-content:center; flex-wrap: wrap;">
+                <button class="btn" onclick="toggleReveal()" style="background:#95a5a6; color:white;">显示/隐藏文字</button>
+                <button class="btn" onclick="replay()" style="background:#34495e; color:white;">🔄 重播</button>
+            </div>
         </div>
     </div>
 
-    <footer>
+    <div class="footer-note">
         免责声明：本工具是基于开源技术开发的练习工具，随配套文件赠送，仅供模拟练习。
-    </footer>
+    </div>
 </div>
 
 <script>
-    const CORRECT_PASS = "8888"; 
-    const data = [
-        { title: "1. 自我介绍与周围环境", questions: [
-            "Introduce yourself. What kind of person do you think you are? Describe yourself with three words.",
-            "Introduce your family.", "Introduce your best friend.", "Introduce your hometown.",
-            "Do you have a girl/boy friend？Are you in a relationship?",
-            "Have you ever traveled to any place? Please introduce a tourist attraction / favorite city.",
-            "What’s your hobby? What are your hobbies and interests? What do you like to do in your free time?",
-            "What’s your favorite sport/athlete/movie/book?",
-            "What are your strengths and weaknesses? What are your advantages and disadvantages?",
-            "What is your English name and why did you choose it?",
-            "How do your hobbies help you in your medical studies?"
-        ]},
-        { title: "2. 本科阶段经历", questions: [
-            "Introduce your undergraduate school.", "Introduce the student club you joined in.",
-            "What do you usually do on weekends? How was your typical day at school?",
-            "How do you balance your studies and research?", "What skills did you acquire in college?",
-            "What's your favorite subject? Why?", "How many people are there in your major?",
-            "How do you learn English? / How did you improve your spoken English?",
-            "Which course was the most difficult for you, and how did you pass it?",
-            "If you could restart your undergraduate life, what would you do differently?",
-            "Introduce your scientific experience. What competition/project did you participate in?",
-            "What's the relationship between practice and science?",
-            "What do you think is the most important quality for a medical post-graduate?",
-            "What is the significance/innovation of your research project?",
-            "Have you been to the laboratory? How much time do you spend on experiments each week?",
-            "How often do you read papers? How do you read papers
+const data = [
+    { title: "自我介绍与周围环境", questions: [
+        "Introduce yourself. What kind of person do you think you are? Describe yourself with three words.",
+        "Introduce your family.", "Introduce your best friend.", "Introduce your hometown.",
+        "Do you have a girl/boy friend？Are you in a relationship?",
+        "Have you ever traveled to any place? Please introduce a tourist attraction / favorite city.",
+        "What’s your hobby? What are your hobbies and interests? What do you like to do in your free time? Do you have any hobbies?",
+        "What’s your favorite sport/athlete/movie/book?",
+        "What are your strengths and weaknesses? What are your advantages and disadvantages? What are you good at, and where you’re working on improving?",
+        "What is your English name and why did you choose it?",
+        "How do your hobbies help you in your medical studies?"
+    ]},
+    { title: "本科阶段经历", questions: [
+        "Introduce your undergraduate school.", "Introduce the student club you joined in.",
+        "What do you usually do on weekends? How do you spend your time at school on a daily basis? How was your typical day at school?",
+        "How do you balance your studies and research?", "What skills did you acquire in college?",
+        "What's your favorite subject? Why?", "How many people are there in your major?",
+        "How do you learn English? / What's your attitude towards learning English? / How did you improve your spoken English?",
+        "Which course was the most difficult for you, and how did you pass it?",
+        "If you could restart your undergraduate life, what would you do differently?",
+        "Introduce your scientific experience. What competition/project did you participate in? Introduce the research project you conducted during your undergraduate studies.",
+        "What's the relationship between practice and science?", "What do you think is the most important quality for a medical post-graduate?",
+        "What is the significance/innovation of your research project?",
+        "Have you been to the laboratory? How long do you usually stay in the laboratory? How much time do you spend on experiments each week?",
+        "How often do you read papers? How do you read papers?",
+        "Which topic/area/field are you particularly interested in?",
+        "Introduce the social practice project / volunteer experiences you have joined.",
+        "Do you have any experience studying abroad?"
+    ]},
+    { title: "选择动机和未来规划", questions: [
+        "Why do you want to be a doctor? Why do you choose this major?",
+        "Why do you choose the academic or professional degree?",
+        "What are your long-term and short-term goals? / Talk about your dreams. / Talk about your plans for your postgraduate studies."
+    ]},
+    { title: "心理素质与人际关系", questions: [
+        "How do you deal with negative emotions, like stress and anxiety / setbacks? How do you relieve stress?",
+        "How do you handle the failure of an experiment?",
+        "Talk about the most successful experience. What do you consider to be your greatest achievement during your undergraduate years?",
+        "As the team leader, how do you manage the team?", "Tell me about your teamwork experience.",
+        "How do your friends talk about you?",
+        "If you have an argument with someone, how do you resolve it? Describe a situation where you had to work with a difficult teammate.",
+        "Can you handle many tasks at the same time?", "Do you think you are an emotionally stable person?",
+        "Do you prefer to work alone or together?"
+    ]}
+];
+
+let currentCatIdx = 0;
+let currentQText = "";
+let isRevealed = false;
+let isGlobalRandom = false;
+const synth = window.speechSynthesis;
+
+// 初始化语音列表
+function loadVoices() {
+    const select = document.getElementById('voice-select');
+    const allVoices = synth.getVoices();
+    // 优先筛选英文，同时寻找可能的中文人声（部分系统会将带有Chinese口音的英文也标出）
+    const targetVoices = allVoices.filter(v => v.lang.includes('en') || v.lang.includes('zh'));
+    
+    select.innerHTML = targetVoices.map(v => 
+        `<option value="${v.name}">${v.name.includes('Google') ? v.name.replace('Google ', '') : v.name} (${v.lang})</option>`
+    ).join('');
+}
+
+if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+// 语速数值显示
+document.getElementById('rate-range').oninput = function() {
+    document.getElementById('rate-val').innerText = this.value;
+};
+
+function showCategory(index) {
+    currentCatIdx = index;
+    isGlobalRandom = false;
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('question-view').style.display = 'block';
+    document.getElementById('cat-title').innerText = data[index].title;
+    
+    const list = document.getElementById('q-list');
+    list.innerHTML = data[index].questions.map(q => `
+        <div class="q-item">
+            <div class="q-text">${q}</div>
+            <button class="play-btn" onclick="speak('${q.replace(/'/g, "\\'")}')">▶</button>
+        </div>
+    `).join('');
+}
+
+function goHome() {
+    document.getElementById('home-view').style.display = 'grid';
+    document.getElementById('question-view').style.display = 'none';
+    document.getElementById('practice-view').style.display = 'none';
+}
+
+function startRandomFromCat() {
+    isGlobalRandom = false;
+    enterPracticeMode();
+}
+
+function startRandomGlobal() {
