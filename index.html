@@ -5,106 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>医学生保研面试模拟器 - 不发正刊不改名</title>
     <style>
-        :root { --primary: #2c3e50; --secondary: #3498db; --accent: #27ae60; --bg: #f4f7f6; --danger: #e74c3c; }
-        body { font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--primary); line-height: 1.6; }
-        .container { max-width: 1100px; margin: 0 auto; padding-bottom: 60px; }
-        header { text-align: center; margin-bottom: 40px; }
-        h1 { font-size: 2.2rem; margin-bottom: 10px; color: var(--primary); }
-        .subtitle { color: #7f8c8d; font-weight: bold; }
+        :root { --primary: #2c3e50; --secondary: #3498db; --accent: #27ae60; --bg: #f8fafc; --danger: #e74c3c; }
+        body { font-family: 'PingFang SC', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--primary); }
+        .container { max-width: 900px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; color: #1a202c; }
+        .subtitle { color: #64748b; font-size: 0.95rem; }
 
-        /* 布局 */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease; border-top: 6px solid var(--secondary); text-align: center; }
-        .card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
-        .card h2 { margin: 0; font-size: 1.2rem; color: var(--primary); }
-        .card.special { border-top-color: var(--accent); background: #f0fff4; }
+        /* 主页卡片 */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); cursor: pointer; transition: 0.2s; border-left: 5px solid var(--secondary); display: flex; align-items: center; justify-content: center; text-align: center; font-weight: bold; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .card.random-card { border-left-color: var(--accent); background: #f0fdf4; grid-column: span 2; color: var(--accent); }
 
-        /* 内容视图 */
-        #question-view, #practice-view { display: none; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 10px; }
-        .btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.9rem; }
-        .btn-back { background: #ecf0f1; color: #7f8c8d; }
-        .btn-random { background: var(--accent); color: white; }
+        /* 视图控制 */
+        #question-view, #practice-view { display: none; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #edf2f7; }
         
-        /* 快速设置栏 */
-        .quick-settings { background: #f8f9fa; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 0.85rem; flex-wrap: wrap; }
-        .setting-item { display: flex; align-items: center; gap: 5px; }
-
-        /* 问题项 */
-        .q-item { padding: 15px; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; align-items: center; }
-        .q-text { font-size: 1rem; flex: 1; padding-right: 15px; color: #444; }
-        .play-btn { background: var(--secondary); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .play-btn:hover { opacity: 0.8; }
-
-        /* 练习模式 */
-        .practice-container { text-align: center; max-width: 700px; margin: 0 auto; }
-        #hidden-q { font-size: 1.5rem; min-height: 120px; display: flex; align-items: center; justify-content: center; margin: 25px 0; padding: 25px; border: 2px dashed #cbd5e0; border-radius: 12px; background: #fafafa; line-height: 1.4; }
+        /* 列表项 */
+        .q-item { padding: 15px; border-bottom: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 10px; }
+        .q-text { font-size: 1rem; color: #334155; line-height: 1.5; font-weight: 500; }
+        .controls-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #f8fafc; padding: 8px; border-radius: 8px; }
         
-        .footer-note { text-align: center; font-size: 0.8rem; color: #bdc3c7; margin-top: 40px; padding: 20px; border-top: 1px solid #eee; }
+        /* 按钮样式 */
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
+        .btn-back { background: #f1f5f9; color: #475569; }
+        .play-btn { background: var(--secondary); color: white; display: flex; align-items: center; gap: 5px; }
+        
+        /* 设置组件 */
+        .setting-group { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #64748b; }
+        select, input[type="range"] { padding: 2px; border-radius: 4px; border: 1px solid #cbd5e0; }
 
-        select, input[type="range"] { padding: 4px; border-radius: 4px; border: 1px solid #ddd; }
+        /* 抽题模式 */
+        .practice-box { text-align: center; padding: 40px 10px; }
+        #hidden-q { font-size: 1.4rem; min-height: 100px; margin: 20px 0; display: flex; align-items: center; justify-content: center; border: 2px dashed #e2e8f0; border-radius: 12px; padding: 20px; color: #94a3b8; }
+        .reveal-active { color: var(--danger) !important; border-style: solid !important; border-color: #fee2e2 !important; background: #fef2f2; }
+
+        footer { margin-top: auto; padding: 30px 0; text-align: center; color: #94a3b8; font-size: 0.75rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
+    <header id="main-header">
         <h1>🩺 医学生保研面试模拟器</h1>
         <p class="subtitle">不发正刊不改名（全平台同名）原创</p>
     </header>
 
-    <div id="global-controls" class="quick-settings">
-        <div class="setting-item">
-            <label>🗣️ 人声:</label>
-            <select id="voice-select" style="width: 150px;"></select>
-        </div>
-        <div class="setting-item">
-            <label>⚡ 语速:</label>
-            <input type="range" id="rate-range" min="0.5" max="1.2" step="0.1" value="0.8">
-            <span id="rate-val">0.8</span>
-        </div>
-    </div>
-
     <div id="home-view" class="grid">
-        <div class="card" onclick="showCategory(0)"><h2>👤 自我介绍与环境</h2></div>
-        <div class="card" onclick="showCategory(1)"><h2>🎓 本科阶段经历</h2></div>
-        <div class="card" onclick="showCategory(2)"><h2>🎯 动机与未来规划</h2></div>
-        <div class="card" onclick="showCategory(3)"><h2>🧠 心理素质与人际</h2></div>
-        <div class="card special" onclick="startRandomGlobal()"><h2>🎲 进入随机抽题模式</h2></div>
+        <div class="card" onclick="showCategory(0)">1. 自我介绍与周围环境</div>
+        <div class="card" onclick="showCategory(1)">2. 本科阶段经历</div>
+        <div class="card" onclick="showCategory(2)">3. 选择动机和未来规划</div>
+        <div class="card" onclick="showCategory(3)">4. 心理素质与人际关系</div>
+        <div class="card random-card" onclick="enterPracticeMode(true)">🎲 进入随机抽题模式</div>
     </div>
 
     <div id="question-view">
         <div class="nav-header">
             <button class="btn btn-back" onclick="goHome()">← 返回主页</button>
-            <h2 id="cat-title"></h2>
-            <button class="btn btn-random" onclick="startRandomFromCat()">🎲 随机本板块</button>
+            <strong id="cat-title"></strong>
+            <span></span>
         </div>
         <div id="q-list"></div>
     </div>
 
     <div id="practice-view">
         <div class="nav-header">
-            <button class="btn btn-back" onclick="backToPrev()">← 返回列表</button>
-            <h2 id="mode-title">随机抽题练习</h2>
+            <button class="btn btn-back" onclick="goHome()">← 返回主页</button>
+            <strong>随机抽题模式</strong>
             <span></span>
         </div>
-        <div class="practice-container">
-            <button onclick="pickRandom()" style="padding:15px 40px; font-size:1.1rem; background:var(--secondary); color:white; border:none; border-radius:50px; cursor:pointer; box-shadow: 0 4px 12px rgba(52,152,219,0.3)">点击随机抽题并播放</button>
-            
-            <div id="hidden-q">题目已隐藏，请仔细听讲...</div>
-            
-            <div style="display:flex; gap:10px; justify-content:center; flex-wrap: wrap;">
-                <button class="btn" onclick="toggleReveal()" style="background:#95a5a6; color:white;">显示/隐藏文字</button>
-                <button class="btn" onclick="replay()" style="background:#34495e; color:white;">🔄 重播</button>
+        <div class="practice-box">
+            <button class="btn" onclick="pickRandom()" style="background:var(--accent); color:white; padding:15px 30px; font-size:1.1rem; border-radius:50px;">🎲 随机抽取一题</button>
+            <div id="hidden-q">点击上方按钮开始</div>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button class="btn" onclick="toggleReveal()" style="background:#64748b; color:white;">显示/隐藏文字</button>
+                <button class="btn" onclick="replay()" style="background:var(--secondary); color:white;">🔄 重播</button>
+            </div>
+            <div class="controls-row" style="margin-top:20px; justify-content:center;">
+                <div class="setting-group">
+                    🗣️ 口音: <select id="global-voice"></select>
+                </div>
+                <div class="setting-group">
+                    ⚡ 语速: <input type="range" class="speed-slider" min="0.5" max="1.2" step="0.1" value="0.8">
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="footer-note">
+    <footer>
         免责声明：本工具是基于开源技术开发的练习工具，随配套文件赠送，仅供模拟练习。
-    </div>
+    </footer>
 </div>
 
 <script>
@@ -154,47 +145,57 @@ const data = [
     ]}
 ];
 
-let currentCatIdx = 0;
-let currentQText = "";
+let synth = window.speechSynthesis;
+let currentQ = "";
 let isRevealed = false;
-let isGlobalRandom = false;
-const synth = window.speechSynthesis;
 
-// 初始化语音列表
-function loadVoices() {
-    const select = document.getElementById('voice-select');
-    const allVoices = synth.getVoices();
-    // 优先筛选英文，同时寻找可能的中文人声（部分系统会将带有Chinese口音的英文也标出）
-    const targetVoices = allVoices.filter(v => v.lang.includes('en') || v.lang.includes('zh'));
-    
-    select.innerHTML = targetVoices.map(v => 
-        `<option value="${v.name}">${v.name.includes('Google') ? v.name.replace('Google ', '') : v.name} (${v.lang})</option>`
-    ).join('');
+function loadVoices(selectId) {
+    const select = document.getElementById(selectId);
+    const voices = synth.getVoices();
+    // 过滤出英文及常见的中文人声（中文人声读英语通常有中式口音）
+    const filtered = voices.filter(v => v.lang.includes('en') || v.lang.includes('zh'));
+    select.innerHTML = filtered.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
 }
 
-if (speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = loadVoices;
-}
-
-// 语速数值显示
-document.getElementById('rate-range').oninput = function() {
-    document.getElementById('rate-val').innerText = this.value;
+window.speechSynthesis.onvoiceschanged = () => {
+    loadVoices('global-voice');
 };
 
-function showCategory(index) {
-    currentCatIdx = index;
-    isGlobalRandom = false;
+function showCategory(idx) {
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('question-view').style.display = 'block';
-    document.getElementById('cat-title').innerText = data[index].title;
+    document.getElementById('cat-title').innerText = data[idx].title;
     
     const list = document.getElementById('q-list');
-    list.innerHTML = data[index].questions.map(q => `
+    list.innerHTML = data[idx].questions.map((q, i) => `
         <div class="q-item">
             <div class="q-text">${q}</div>
-            <button class="play-btn" onclick="speak('${q.replace(/'/g, "\\'")}')">▶</button>
+            <div class="controls-row">
+                <button class="btn play-btn" onclick="playQuestion(this, '${q.replace(/'/g, "\\'")}')">▶ 播放</button>
+                <div class="setting-group">
+                    🗣️: <select class="voice-sel" id="vs-${idx}-${i}"></select>
+                </div>
+                <div class="setting-group">
+                    ⚡: <input type="range" class="speed-slider" min="0.5" max="1.2" step="0.1" value="0.8">
+                </div>
+            </div>
         </div>
     `).join('');
+    
+    // 为当前页面的所有下拉框加载配音
+    data[idx].questions.forEach((_, i) => loadVoices(`vs-${idx}-${i}`));
+}
+
+function playQuestion(btn, text) {
+    synth.cancel();
+    const row = btn.parentElement;
+    const voiceName = row.querySelector('select').value;
+    const speed = row.querySelector('input').value;
+    
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.voice = synth.getVoices().find(v => v.name === voiceName);
+    utter.rate = speed;
+    synth.speak(utter);
 }
 
 function goHome() {
@@ -203,9 +204,57 @@ function goHome() {
     document.getElementById('practice-view').style.display = 'none';
 }
 
-function startRandomFromCat() {
-    isGlobalRandom = false;
-    enterPracticeMode();
+function enterPracticeMode() {
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('practice-view').style.display = 'block';
+    currentQ = "";
+    isRevealed = false;
+    document.getElementById('hidden-q').innerText = "点击上方按钮开始";
+    document.getElementById('hidden-q').classList.remove('reveal-active');
+    loadVoices('global-voice');
 }
 
-function startRandomGlobal() {
+function pickRandom() {
+    const allQs = data.flatMap(d => d.questions);
+    currentQ = allQs[Math.floor(Math.random() * allQs.length)];
+    isRevealed = false;
+    const box = document.getElementById('hidden-q');
+    box.innerText = "题目已隐藏，请注意听...";
+    box.classList.remove('reveal-active');
+    
+    // 自动播放
+    replay();
+}
+
+function replay() {
+    if (!currentQ) return;
+    synth.cancel();
+    const voiceName = document.getElementById('global-voice').value;
+    const speed = document.querySelector('#practice-view .speed-slider').value;
+    
+    const utter = new SpeechSynthesisUtterance(currentQ);
+    utter.voice = synth.getVoices().find(v => v.name === voiceName);
+    utter.rate = speed;
+    synth.speak(utter);
+}
+
+function toggleReveal() {
+    if (!currentQ) return;
+    const box = document.getElementById('hidden-q');
+    isRevealed = !isRevealed;
+    if (isRevealed) {
+        box.innerText = currentQ;
+        box.classList.add('reveal-active');
+    } else {
+        box.innerText = "题目已隐藏，请注意听...";
+        box.classList.remove('reveal-active');
+    }
+}
+
+// 初始化
+window.onload = () => {
+    if(synth.getVoices().length) loadVoices('global-voice');
+};
+</script>
+</body>
+</html>
